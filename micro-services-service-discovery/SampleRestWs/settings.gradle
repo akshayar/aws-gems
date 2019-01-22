@@ -1,0 +1,4 @@
+rootProject.name = 'SampleRestWs'
+include 'transaction-ws'
+include 'user-ws'
+

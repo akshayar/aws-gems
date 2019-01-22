@@ -1,0 +1,4 @@
+"AppName": "app" 
+"EnvPrefix": "aksh-test" 
+"DeployS3BucketName": "deploy"  
+"ServiceName":  "user"  

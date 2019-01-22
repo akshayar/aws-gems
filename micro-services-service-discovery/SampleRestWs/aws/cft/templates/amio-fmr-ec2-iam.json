@@ -1,0 +1,173 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "HBTE Dasboard UI Application Stack CFT",
+	"Parameters": {
+		"DeployS3BucketName": {
+			"Type": "String",
+			"Description": "S3 Deploy Bucket",
+			"AllowedPattern": "[a-zA-Z][a-zA-Z0-9-.]*",
+			"ConstraintDescription": "must start with alphabet. can contain alphanumeric chars including - .",
+			"Default": "deploy"
+		},
+		"AppName": {
+			"Type": "String",
+			"Description": "Applcation Name",
+			"AllowedPattern": "[a-zA-Z][a-zA-Z0-9-.]*",
+			"ConstraintDescription": "must start with alphabet. can contain alphanumeric chars including - ."
+		},
+		"ServiceName": {
+			"Type": "String",
+			"Description": "Applcation Name",
+			"AllowedPattern": "[a-zA-Z][a-zA-Z0-9-.]*",
+			"ConstraintDescription": "must start with alphabet. can contain alphanumeric chars including - ."
+		},
+		"EnvPrefix": {
+			"Type": "String",
+			"Description": "Environment Prefix.",
+			"Default": "aksh-test"
+		}
+	},
+	"Resources": {
+		"WebServiceIAMRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"ec2.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Policies": [
+					{
+						"PolicyName": {
+							"Fn::Join": [
+								"-",
+								[
+									{
+										"Ref": "EnvPrefix"
+									},
+									{
+										"Ref": "AppName"
+									},
+									{
+										"Ref": "ServiceName"
+									},
+									"policy"
+								]
+							]
+						},
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"s3:ListBucket",
+										"s3:GetObject",
+										"s3:PutObject"
+									],
+									"Resource": "*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:DescribeLogGroups",
+										"logs:DescribeLogStreams",
+										"logs:PutLogEvents"
+									],
+									"Resource": [
+										{
+											"Fn::Join": [
+												":",
+												[
+													"arn:aws:logs",
+													{
+														"Ref": "AWS::Region"
+													},
+													{
+														"Ref": "AWS::AccountId"
+													},
+													"*"
+												]
+											]
+										}
+									]
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"cloudwatch:PutMetricData"
+									],
+									"Resource": "*"
+								}
+							]
+						}
+					}
+				],
+				"Path": "/",
+				"RoleName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "EnvPrefix"
+							},
+							{
+								"Ref": "AppName"
+							},
+							{
+								"Ref": "ServiceName"
+							},
+							"role"
+						]
+					]
+				}
+			}
+		},
+		"WebServiceIAMRoleInstanceProfile": {
+			"Type": "AWS::IAM::InstanceProfile",
+			"DependsOn": [
+				"WebServiceIAMRole"
+			],
+			"Properties": {
+				"InstanceProfileName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "EnvPrefix"
+							},
+							{
+								"Ref": "AppName"
+							},
+							{
+								"Ref": "ServiceName"
+							},
+							"ip"
+						]
+					]
+				},
+				"Path": "/",
+				"Roles": [
+					{
+						"Ref": "WebServiceIAMRole"
+					}
+				]
+			}
+		}
+	},
+	"Outputs": {
+	}
+}

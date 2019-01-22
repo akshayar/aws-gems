@@ -1,0 +1,196 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "HBTE Dasboard UI Application Stack CFT",
+	"Parameters": {
+		"VPC": {
+			"Type": "AWS::EC2::VPC::Id",
+			"Description": "Existing VPC ID"
+		},
+		"SubnetIds": {
+			"Type": "List<AWS::EC2::Subnet::Id>",
+			"Description": "SubnetIds"
+		},
+		"AppName": {
+			"Type": "String",
+			"Description": "Applcation Name",
+			"AllowedPattern": "[a-zA-Z][a-zA-Z0-9-.]*",
+			"ConstraintDescription": "must start with alphabet. can contain alphanumeric chars including - ."
+		},"ServiceName": {
+			"Type": "String",
+			"Description": "Applcation Name",
+			"AllowedPattern": "[a-zA-Z][a-zA-Z0-9-.]*",
+			"ConstraintDescription": "must start with alphabet. can contain alphanumeric chars including - ."
+		},
+		"ImageId": {
+			"Type": "String",
+			"Description": "AMI Id.",
+			"Default": "ami-035be7bafff33b6b6"
+		},
+		"SecurityGroup": {
+			"Description": "Security Group for the Auto Scaling Group",
+			"Default": "sg-028cce77",
+			"Type": "AWS::EC2::SecurityGroup::Id",
+			"ConstraintDescription": "must be the name of an existing Security Group."
+		},
+		"InstanceType": {
+			"Default": "t2.micro",
+			"Description": "Server instance type",
+			"Type": "String"
+		},
+		"KeyName": {
+			"Description": "PEM Key Pair for the Auto Scaling Group",
+			"Type": "String",
+			"ConstraintDescription": "must be the name of an existing EC2 KeyPair.",
+			"Default": "aksh-test-2"
+		},
+		"EnvPrefix": {
+			"Type": "String",
+			"Description": "Env Prefix.",
+			"Default": "aksh-test"
+		},
+		"Path": {
+			"Type": "String",
+			"Description": "Path.",
+			"Default": "/user*"
+		},
+		"HealthCheckPath": {
+			"Type": "String",
+			"Description": "Health Check Path.",
+			"Default": "/user/ping"
+		},
+		"Port": {
+			"Type": "String",
+			"Description": "Port.",
+			"Default": "8080"
+		},
+		"Protocol": {
+			"Type": "String",
+			"Description": "Protocol.",
+			"Default": "HTTP"
+		},
+		"JarName": {
+			"Type": "String",
+			"Description": "Jar Name.",
+			"Default": "user-ws-0.1.0.jar"
+		},
+		"Priority": {
+			"Type": "String",
+			"Description": "Priority.",
+			"Default": "2"
+		}
+	},
+	"Resources": {
+		"ALBTargetGroup": {
+			"Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+			"Properties": {
+				"Name": {"Fn::Sub": "${AppName}-${ServiceName}"},
+				"HealthCheckIntervalSeconds": 30,
+				"HealthCheckTimeoutSeconds": 5,
+				"HealthyThresholdCount": 3,
+				"HealthCheckPath": {"Ref": "HealthCheckPath"},
+				"Port": {"Ref": "Port"},
+				"Protocol": {"Ref": "Protocol"},
+				"UnhealthyThresholdCount": 5,
+				"VpcId": {
+					"Ref": "VPC"
+				}
+			}
+		},
+		"ListenerRule": {
+			"Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+			"DependsOn": [
+				"ALBTargetGroup"
+			],
+			"Properties": {
+				"Actions": [
+					{
+						"Type": "forward",
+						"TargetGroupArn": {
+							"Ref": "ALBTargetGroup"
+						}
+					}
+				],
+				"Conditions": [
+					{
+						"Field": "path-pattern",
+						"Values": [
+							{
+								"Ref": "Path"
+							}
+						]
+					}
+				],
+				"ListenerArn": {
+					"Fn::ImportValue": "ALBListenerARN"
+				},
+				"Priority": {"Ref":"Priority"}
+			}
+		},
+		"WebServerGroup": {
+			"Type": "AWS::AutoScaling::AutoScalingGroup",
+			"DependsOn": [
+				"ALBTargetGroup",
+				"LaunchConfig"
+			],
+			"Properties": {
+				"AutoScalingGroupName": {
+					"Fn::Sub": "${EnvPrefix}-${AppName}-${ServiceName}"
+				},
+				"VPCZoneIdentifier": {
+					"Ref": "SubnetIds"
+				},
+				"LaunchConfigurationName": {
+					"Ref": "LaunchConfig"
+				},
+				"MinSize": "1",
+				"MaxSize": "2",
+				"TargetGroupARNs": [
+					{
+						"Ref": "ALBTargetGroup"
+					}
+				]
+			}
+		},
+		"LaunchConfig": {
+			"Type": "AWS::AutoScaling::LaunchConfiguration",
+			"Properties": {
+				"ImageId": {
+					"Ref": "ImageId"
+				},
+				"SecurityGroups": [
+					{
+						"Ref": "SecurityGroup"
+					}
+				],
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"IamInstanceProfile": {
+					"Fn::Sub": "arn:aws:iam::${AWS::AccountId}:instance-profile/${EnvPrefix}-${AppName}-${ServiceName}-ip"
+				},
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"",
+							[
+								"#!/bin/bash\n",
+                                {
+                                    "Fn::Sub": "sudo aws s3 cp s3://${EnvPrefix}-deploy/deploy.sh . \n"
+                                },
+                                "sudo chmod +x ./deploy.sh \n",
+                                {
+                                    "Fn::Sub": "source deploy.sh ${EnvPrefix}-deploy ${JarName}  \n"
+                                }
+							]
+						]
+					}
+				}
+			}
+		}
+	},
+	"Outputs": {
+	}
+}

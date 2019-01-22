@@ -1,0 +1,15 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE")
+    }
+}
+
+group 'com.sapient.io'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
