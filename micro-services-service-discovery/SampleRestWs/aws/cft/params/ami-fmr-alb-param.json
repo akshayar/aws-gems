@@ -1,0 +1,38 @@
+[
+	{
+		"ParameterKey": "AppName",
+		"ParameterValue": "app"
+	},
+	{
+		"ParameterKey": "EnvPrefix",
+		"ParameterValue": "aksh-test"
+	},
+	{
+		"ParameterKey": "IdleTimeout",
+		"ParameterValue": "60"
+	},
+	{
+		"ParameterKey": "Port",
+		"ParameterValue": "8080"
+	},
+	{
+		"ParameterKey": "Protocol",
+		"ParameterValue": "HTTP"
+	},
+	{
+		"ParameterKey": "Scheme",
+		"ParameterValue": "internet-facing"
+	},
+	{
+		"ParameterKey": "SecurityGroupIds",
+		"ParameterValue": "sg-08de9b120b045cd5f"
+	},
+	{
+		"ParameterKey": "SubnetIds",
+		"ParameterValue": "subnet-0530def9b6476ff3b,subnet-0d30d35812b8d949c"
+	},
+	{
+		"ParameterKey": "VPC",
+		"ParameterValue": "vpc-0c68b4de3879358d1"
+	}
+]

@@ -177,12 +177,14 @@
 							"",
 							[
 								"#!/bin/bash\n",
+								"sudo mkdir -p /var/log/app && sudo touch /var/log/app/init.log \n",
+								"sudo  chmod 777 /var/log/app/init.log \n",
                                 {
-                                    "Fn::Sub": "sudo aws s3 cp s3://${EnvPrefix}-deploy/deploy.sh . \n"
+                                    "Fn::Sub": "sudo aws s3 cp --recursive s3://${EnvPrefix}-deploy/ . \n"
                                 },
-                                "sudo chmod +x ./deploy.sh \n",
+                                "sudo chmod +x *.sh \n",
                                 {
-                                    "Fn::Sub": "source deploy.sh ${EnvPrefix}-deploy ${JarName}  \n"
+                                    "Fn::Sub": "source deploy.sh ${EnvPrefix}-deploy ${JarName} ${ServiceName} 2>&1 | tee /var/log/app/init.log \n"
                                 }
 							]
 						]
