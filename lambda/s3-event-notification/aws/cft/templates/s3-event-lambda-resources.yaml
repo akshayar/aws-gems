@@ -4,7 +4,7 @@ Parameters:
   jarFileLocation:
     Type: String
     Description: S3 Object Key of lambda code.
-    Default: MyFunction.zip 
+    Default: s3-event-notification/s3-triggered-lambda.jar 
   MemorySize:
     Type: Number
     Description: Memory Size
