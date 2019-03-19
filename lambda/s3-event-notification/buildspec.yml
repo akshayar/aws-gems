@@ -11,5 +11,5 @@ phases:
       - mvn package -DskipTests
 artifacts:
   files:
-    - lambda/s3-event-notification/target/s3-triggered-lambda-1.0.0.jar
+    - lambda/s3-event-notification/target/s3-triggered-lambda.jar
   discard-paths: yes

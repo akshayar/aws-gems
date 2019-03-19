@@ -11,6 +11,7 @@
   <artifactId>s3-triggered-lambda</artifactId>
   <version>1.0.0</version>
   <build>
+    <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
