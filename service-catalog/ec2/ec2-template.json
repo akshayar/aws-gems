@@ -1,0 +1,87 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "HBTE Dasboard UI Application Stack CFT",
+	"Parameters": {
+		"SubnetId": {
+			"Type": "AWS::EC2::Subnet::Id",
+			"Description": "SubnetId",
+			"Default": "subnet-0530def9b6476ff3b"
+		},
+		"ImageId": {
+			"Type": "String",
+			"Description": "AMI Id.",
+			"Default": "ami-035be7bafff33b6b6"
+		},
+		"SecurityGroup": {
+			"Description": "Security Group for the Auto Scaling Group",
+			"Default": "sg-028cce77",
+			"Type": "AWS::EC2::SecurityGroup::Id",
+			"ConstraintDescription": "must be the name of an existing Security Group.",
+			"Default": "sg-08de9b120b045cd5f"
+		},
+		"InstanceType": {
+			"Default": "t2.micro",
+			"Description": "Server instance type",
+			"Type": "String"
+		},
+		"KeyName": {
+			"Description": "PEM Key Pair for the Auto Scaling Group",
+			"Type": "String",
+			"ConstraintDescription": "must be the name of an existing EC2 KeyPair.",
+			"Default": "aksh-test-2"
+		},
+		"EnvPrefix": {
+			"Type": "String",
+			"Description": "Env Prefix.",
+			"Default": "aksh-test"
+		},
+		"iamRoles":{
+			"Type": "List<String>",
+			"Description": "List Of IAM roles.",
+			"Default": "ec-role"
+		}
+	},
+	"Resources": {
+	    "IamInstanceProfile" :{
+			"Type":"AWS::IAM::InstanceProfile",
+			"Properties":{
+				"Roles":{"Ref":"iamRoles"}
+			}
+		},
+		"Ec2": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"SubnetId":{
+					"Ref": "SubnetId"
+				},
+				"ImageId": {
+					"Ref": "ImageId"
+				},
+				"SecurityGroupIds": [
+					{
+						"Ref": "SecurityGroup"
+					}
+				],
+				"InstanceType": {
+					"Ref": "InstanceType"
+				},
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"IamInstanceProfile": {
+					"Ref":"IamInstanceProfile"
+				},
+				"Tags":[
+					{  
+					  "Key":"EnvPrefix",
+					  "Value":{  
+						 "Ref":"EnvPrefix"
+					  }
+				   }
+				]
+			}
+		}
+	},
+	"Outputs": {
+	}
+}
