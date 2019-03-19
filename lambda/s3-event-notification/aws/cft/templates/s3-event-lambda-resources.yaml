@@ -41,6 +41,10 @@ Parameters:
     Type: String
     Description: HandlerClass.
     Default: com.sap.trigger.landing.s3.lambda.LandingZoneS3TriggeredLambdaFunctionHandler
+  Alias:
+    Description: Alias
+    Type: String
+    Default: current
 Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -98,6 +102,24 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: java8
       Timeout: !Ref 'Timeout'
+  S3LambdaFunctionVersion: 
+    Type: AWS::Lambda::Version
+    Properties: 
+      FunctionName: 
+        Ref: "S3LambdaFunction"
+      Description: "A version"
+  S3LambdaFunctionAlias: 
+    Type: AWS::Lambda::Alias
+    Properties: 
+      FunctionName: 
+        Ref: "S3LambdaFunction"
+      FunctionVersion: 
+        Fn::GetAtt: 
+          - "S3LambdaFunctionVersion"
+          - "Version"
+      Name:
+        Ref: "Alias"
+
   S3MetadataUpdaterBucketPermission:
     Type: AWS::Lambda::Permission
     Properties:
