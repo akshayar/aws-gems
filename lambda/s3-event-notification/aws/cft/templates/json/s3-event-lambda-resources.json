@@ -1,0 +1,137 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "This template creates a s3 bucket",
+	"Parameters": {
+		"jarFileLocation": {
+			"Type": "String",
+			"Description": "S3 Object Key of lambda code.",
+			"Default" : "landing-zone-trigger-0.0.1-SNAPSHOT.jar"
+		},
+		"MemorySize": {
+			"Type": "Number",
+			"Description": "Memory Size",
+			"Default" : "512"
+		},
+		"Timeout": {
+			"Type": "Number",
+			"Description": "Time out",
+			"Default" : "120"
+		},
+		"Region": {
+            "Type": "String",
+            "Description": "Region.",
+            "Default":"e1"
+        },
+        "Environment": {
+            "Type": "String",
+            "Description": "Environment name.",
+            "Default":"dit"
+        },
+        "Group": {
+            "Type": "String",
+            "Description": "Group.",
+            "Default":"g1"
+        },
+        "ProductLineId": {
+            "Type": "String",
+            "Description": "ProductLineId.",
+            "Default":"pl1234"
+            
+        },
+        "ApplicationId": {
+            "Type": "String",
+            "Description": "ApplicationId.",
+            "Default":"app1234"
+        },
+        "AppName": {
+            "Type": "String",
+            "Description": "AppName.",
+            "Default":"s3event"
+        },
+        "DeployBucket": {
+            "Type": "String",
+            "Description": "DeployBucket.",
+            "Default":"aksh-test-deploy"
+        },
+        "HandlerClass": {
+            "Type": "String",
+            "Description": "HandlerClass.",
+            "Default":"com.sap.trigger.landing.s3.lambda.LandingZoneS3TriggeredLambdaFunctionHandler"
+        }
+	},
+	"Resources": {
+		"S3MetadataUpdaterLambdaFunction": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"Code": {
+					"S3Bucket": {
+					    "Fn::Sub": "${DeployBucket}"
+					},
+					"S3Key": {
+						"Fn::Sub": "${AppName}/${jarFileLocation}" 
+					}
+				},
+				"FunctionName": {
+				    "Fn::Sub": "${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${AppName}"
+				},
+				"MemorySize": {
+					"Ref": "MemorySize"
+				},
+				"Handler":{
+					"Ref": "HandlerClass"
+				},
+				"Role": {
+				    "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${AppName}-role"
+				},
+				"Runtime": "java8",
+				"Timeout": {
+					"Ref": "Timeout"
+				}
+			}
+		},
+		"S3MetadataUpdaterBucketPermission": {
+			"Type": "AWS::Lambda::Permission",
+			"Properties": {
+				"Action": "lambda:InvokeFunction",
+				"FunctionName": {
+					"Ref": "S3MetadataUpdaterLambdaFunction"
+				},
+				"Principal": "sqs.amazonaws.com",
+				"SourceAccount": {"Ref": "AWS::AccountId"},
+				"SourceArn": {"Fn::GetAtt": ["LZQ","Arn"]}
+			}
+		},
+		"EventSourceMapping": {  
+		  "Type": "AWS::Lambda::EventSourceMapping",
+		  "Properties": {
+		    "BatchSize":"1",
+		    "EventSourceArn" : {"Fn::GetAtt": ["LZQ","Arn"]},
+		    "FunctionName" : { "Ref": "S3MetadataUpdaterLambdaFunction"}
+		  }
+		},
+		"S3Bucket": {
+		    "DependsOn" : "MySQSQueuePolicy",
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": {
+				    "Fn::Sub": "${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-lz"
+				},
+				"NotificationConfiguration" : {
+					"QueueConfigurations" : [{
+						"Queue" : {"Fn::GetAtt": ["LZQ","Arn"]},
+						"Event" : "s3:ObjectCreated:Put"
+					},
+					{
+						"Queue" : {"Fn::GetAtt": ["LZQ","Arn"]},
+						"Event" : "s3:ObjectCreated:Post"
+					},
+					{
+						"Queue" : {"Fn::GetAtt": ["LZQ","Arn"]},
+						"Event" : "s3:ObjectCreated:CompleteMultipartUpload"
+					}
+				 ]
+				}
+			}
+		}
+		}
+}

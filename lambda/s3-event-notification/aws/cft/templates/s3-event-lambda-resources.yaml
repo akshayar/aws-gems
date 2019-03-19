@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template creates a s3 bucket
+Parameters:
+  jarFileLocation:
+    Type: String
+    Description: S3 Object Key of lambda code.
+    Default: MyFunction.zip 
+  MemorySize:
+    Type: Number
+    Description: Memory Size
+    Default: '512'
+  Timeout:
+    Type: Number
+    Description: Time out
+    Default: '120'
+  GroupId:
+    Description: Business Unit
+    Type: String
+    Default: research
+  ApplicationId:
+    Description: Application Id
+    Type: String
+    Default: aws
+  Environment:
+    Description: Environment
+    Type: String
+    Default: dit  
+  AppName:
+    Type: String
+    Description: AppName.
+    Default: s3event
+  BucketName:
+    Type: String
+    Description: DeployBucket.
+    Default: research-aws-dit-landing-zone
+  DeployBucket:
+    Type: String
+    Description: DeployBucket.
+    Default: aksh-test-deploy
+  HandlerClass:
+    Type: String
+    Description: HandlerClass.
+    Default: com.sap.trigger.landing.s3.lambda.LandingZoneS3TriggeredLambdaFunctionHandler
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Description: Defining a execution role for clean up lambda
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      RoleName: !Sub '${GroupId}-${ApplicationId}-${Environment}-${AppName}-role'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: !Sub '${GroupId}-${ApplicationId}-${Environment}-${AppName}-policy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: Stmt1508724907176
+                Action:
+                  - dynamodb:BatchGetItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetItem
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:DeleteItem
+                Effect: Allow
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                Resource:
+                  - !Sub 'arn:aws:s3:::${DeployBucket}/*'
+  S3LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Sub '${DeployBucket}'
+        S3Key: !Sub '${jarFileLocation}'
+      FunctionName: !Sub '${GroupId}-${ApplicationId}-${Environment}-${AppName}'
+      MemorySize: !Ref 'MemorySize'
+      Handler: !Ref 'HandlerClass'
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: java8
+      Timeout: !Ref 'Timeout'
+  S3MetadataUpdaterBucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref 'S3LambdaFunction'
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub "arn:aws:s3:::${BucketName}"
+  BucketConfiguration:
+    Type: Custom::S3BucketConfiguration
+    Properties:
+      ServiceToken: !ImportValue S3BucketConfigurationLambdaArn
+      Bucket: !Ref BucketName
+      NotificationConfiguration:
+        LambdaFunctionConfigurations:
+        - Events: ['s3:ObjectCreated:*']
+          LambdaFunctionArn: !GetAtt S3LambdaFunction.Arn

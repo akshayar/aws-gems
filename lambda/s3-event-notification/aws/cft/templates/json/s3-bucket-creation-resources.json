@@ -1,0 +1,106 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "This template creates a s3 bucket",
+	"Parameters": {
+		"Region": {
+			"Type": "String",
+			"Description": "Region.",
+			"Default": "e1"
+		},
+		"Environment": {
+			"Type": "String",
+			"Description": "Environment name.",
+			"Default": "dit"
+		},
+		"Group": {
+			"Type": "String",
+			"Description": "Group.",
+			"Default": "g1"
+		},
+		"ProductLineId": {
+			"Type": "String",
+			"Description": "ProductLineId.",
+			"Default": "pl201880"
+		},
+		"ApplicationId": {
+			"Type": "String",
+			"Description": "ApplicationId.",
+			"Default": "ap122067"
+		},
+		"BucketName": {
+			"Type": "String",
+			"Description": "BucketName.",
+			"Default": "landing-zone"
+		},
+		"CustomResourceLambdaARN": {
+			"Type": "String",
+			"Description": "BucketName.",
+			"Default": "landing-zone"
+		}
+	},
+	"Resources": {
+		"S3Bucket": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": {
+					"Fn::Sub": "${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${BucketName}"
+				},
+				"Tags": [
+					{
+						"Key": "Region",
+						"Value": {
+							"Ref": "Region"
+						}
+					},
+					{
+						"Key": "Environment",
+						"Value": {
+							"Ref": "Environment"
+						}
+					},
+					{
+						"Key": "Group",
+						"Value": {
+							"Ref": "Group"
+						}
+					},
+					{
+						"Key": "ProductLineId",
+						"Value": {
+							"Ref": "ProductLineId"
+						}
+					},
+					{
+						"Key": "ApplicationId",
+						"Value": {
+							"Ref": "ApplicationId"
+						}
+					}
+				]
+			}
+		},
+		"S3BucketPolicy": {
+			"Type": "AWS::S3::BucketPolicy",
+			"Properties": {
+				"Bucket": {
+					"Fn::Sub": "${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${BucketName}"
+				},
+				"PolicyDocument": {
+					"Statement": [
+						{
+							"Sid": "PermissionOnCustomResourceLambda",
+							"Effect": "Allow",
+							"Principal": {
+								"Ref": "CustomResourceLambdaARN"
+							},
+							"Action": "s3:PutBucketNotification",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${BucketName}"
+							}
+						}
+					]
+				}
+			}
+		}
+	}
+}

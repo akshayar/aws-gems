@@ -1,0 +1,119 @@
+	{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Create DataPipeline cleanup SNS topic and with endpoint Java lambda.",
+    "Parameters": {
+        "Region": {
+            "Type": "String",
+            "Description": "Region.",
+            "Default":"e1"
+        },
+        "Environment": {
+            "Type": "String",
+            "Description": "Environment name.",
+            "Default":"dit"
+        },
+        "Group": {
+            "Type": "String",
+            "Description": "Group.",
+            "Default":"g1"
+        },
+        "ProductLineId": {
+            "Type": "String",
+            "Description": "ProductLineId.",
+            "Default":"pl1234"
+            
+        },
+        "ApplicationId": {
+            "Type": "String",
+            "Description": "ApplicationId.",
+            "Default":"app1234"
+        },
+        "AppName": {
+            "Type": "String",
+            "Description": "AppName.",
+            "Default":"s3event"
+        },
+        "DeployBucket": {
+            "Type": "String",
+            "Description": "DeployBucket.",
+            "Default":"aksh-test-deploy"
+        }      
+    },
+    "Resources": {
+        "DataPipelineCleanUpLambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Description": "Defining a execution role for clean up lambda",
+            "Properties": {
+                "ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+                ],
+                "RoleName": {
+                    "Fn::Sub": "${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${AppName}-role"
+                },
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": {
+                            "Fn::Sub": "${ProductLineId}-${ApplicationId}-${Region}-${Environment}-${Group}-${AppName}-policy"
+                        },
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "Stmt1508724907176",
+                                    "Action": [
+                                        "dynamodb:BatchGetItem",
+                                        "dynamodb:DescribeTable",
+                                        "dynamodb:GetItem",
+                                        "dynamodb:GetRecords",
+                                        "dynamodb:Query",
+                                        "dynamodb:Scan",
+                                        "dynamodb:DeleteItem"
+                                    ],
+                                    "Effect": "Allow",
+									"Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "s3:ListBucket",
+                                        "s3:GetObject"
+                                    ],
+                                    "Resource": [
+                                        {
+                                            "Fn::Sub": "arn:aws:s3:::${DeployBucket}/*"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
