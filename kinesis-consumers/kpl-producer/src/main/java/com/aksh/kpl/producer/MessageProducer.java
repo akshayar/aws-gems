@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class MessageProducer {
-	@Value("${streamName:first-test}")
+	@Value("${streamName:aksh-first}")
 	public String streamName;
 
 	@Value("${shardCount:1}")
