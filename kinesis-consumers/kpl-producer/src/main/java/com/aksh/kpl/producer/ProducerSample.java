@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.aksh.kcl.consumer;
+package com.aksh.kpl.producer;
 
 import java.util.Arrays;
 
@@ -11,14 +11,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
-/**
- * Sample Amazon Kinesis Application.
- */
 @SpringBootApplication
-public  class ApplicationSample {
+public class ProducerSample {
 	
 	public static void main(String[] args) {
-		SpringApplication.run(ApplicationSample.class, args);
+		SpringApplication.run(ProducerSample.class, args);
 	}
 
 	@Bean
@@ -35,4 +32,5 @@ public  class ApplicationSample {
 
 		};
 	}
+
 }

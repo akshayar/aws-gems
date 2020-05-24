@@ -45,5 +45,6 @@
   	<module>kinesislambda</module>
   	<module>kcl-consumer</module>
   	<module>kcl-enhanced-consumer</module>
+  	<module>kpl-producer</module>
   </modules>
 </project>

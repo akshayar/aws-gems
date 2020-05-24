@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -60,6 +61,9 @@ public final class ApplicationBootstraper {
     private String region;
     
     private InitialPositionInStream initPositionToConsume;
+    
+    @Autowired
+    IRecordProcessorFactory recordProcessorFactory ;
 
     
 
@@ -109,7 +113,6 @@ public final class ApplicationBootstraper {
                         workerId);
         kinesisClientLibConfiguration.withInitialPositionInStream(initPositionToConsume);
 
-        IRecordProcessorFactory recordProcessorFactory = new RecordProcessorFactory();
         Worker worker = new Worker(recordProcessorFactory, kinesisClientLibConfiguration);
 
         System.out.printf("Running %s to process stream %s as worker %s...\n",
