@@ -10,6 +10,12 @@ package com.aksh.kcl.consumer;
 import java.net.InetAddress;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.aksh.kcl.consumer.processor.RecordProcessorFactory;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -25,7 +31,8 @@ import com.amazonaws.services.kinesis.model.ResourceNotFoundException;
 /**
  * Sample Amazon Kinesis Application.
  */
-public final class AmazonKinesisApplicationSample {
+@Component
+public final class ApplicationBootstraper {
 
     /*
      * Before running the code:
@@ -39,20 +46,41 @@ public final class AmazonKinesisApplicationSample {
      *      To avoid accidental leakage of your credentials, DO NOT keep
      *      the credentials file in your source directory.
      */
+    
+    @Value("${streamName:first-test}")
+    public String streamName ;
+    
+    @Value("${applicationName:SampleKinesisApplication}")
+    private String applicationName;
+    
+    @Value("${initPosition:TRIM_HORIZON}")
+    private String initPosition;
+    
+    @Value("${region:us-east-1}")
+    private String region;
+    
+    private InitialPositionInStream initPositionToConsume;
 
-    public static final String SAMPLE_APPLICATION_STREAM_NAME = "myFirstStream";
-
-    private static final String SAMPLE_APPLICATION_NAME = "SampleKinesisApplication";
+    
 
     // Initial position in the stream when the application starts up for the first time.
     // Position can be one of LATEST (most recent data) or TRIM_HORIZON (oldest available data)
-    private static final InitialPositionInStream SAMPLE_APPLICATION_INITIAL_POSITION_IN_STREAM =
-            InitialPositionInStream.LATEST;
+    private static final InitialPositionInStream DEFAULT_APPLICATION_INITIAL_POSITION_IN_STREAM =
+            InitialPositionInStream.TRIM_HORIZON;
 
     private static ProfileCredentialsProvider credentialsProvider;
 
-    private static void init() {
-        // Ensure the JVM will refresh the cached IP values of AWS resources (e.g. service endpoints).
+    @PostConstruct
+    void init() throws Exception {
+        initCredentials();
+
+        initPositionToConsume=InitialPositionInStream.valueOf(initPosition);	
+        
+        initApplication();
+    }
+
+	private void initCredentials() {
+		// Ensure the JVM will refresh the cached IP values of AWS resources (e.g. service endpoints).
         java.security.Security.setProperty("networkaddress.cache.ttl", "60");
 
         /*
@@ -68,30 +96,25 @@ public final class AmazonKinesisApplicationSample {
                     + "Please make sure that your credentials file is at the correct "
                     + "location (~/.aws/credentials), and is in valid format.", e);
         }
-    }
+	}
 
-    public static void main(String[] args) throws Exception {
-        init();
+    public void  initApplication() throws Exception {
 
-        if (args.length == 1 && "delete-resources".equals(args[0])) {
-            deleteResources();
-            return;
-        }
 
         String workerId = InetAddress.getLocalHost().getCanonicalHostName() + ":" + UUID.randomUUID();
         KinesisClientLibConfiguration kinesisClientLibConfiguration =
-                new KinesisClientLibConfiguration(SAMPLE_APPLICATION_NAME,
-                        SAMPLE_APPLICATION_STREAM_NAME,
+                new KinesisClientLibConfiguration(applicationName,
+                        streamName,
                         credentialsProvider,
                         workerId);
-        kinesisClientLibConfiguration.withInitialPositionInStream(SAMPLE_APPLICATION_INITIAL_POSITION_IN_STREAM);
+        kinesisClientLibConfiguration.withInitialPositionInStream(initPositionToConsume);
 
-        IRecordProcessorFactory recordProcessorFactory = new AmazonKinesisApplicationRecordProcessorFactory();
+        IRecordProcessorFactory recordProcessorFactory = new RecordProcessorFactory();
         Worker worker = new Worker(recordProcessorFactory, kinesisClientLibConfiguration);
 
         System.out.printf("Running %s to process stream %s as worker %s...\n",
-                SAMPLE_APPLICATION_NAME,
-                SAMPLE_APPLICATION_STREAM_NAME,
+                applicationName,
+                streamName,
                 workerId);
 
         int exitCode = 0;
@@ -105,17 +128,17 @@ public final class AmazonKinesisApplicationSample {
         System.exit(exitCode);
     }
 
-    public static void deleteResources() {
+    public  void deleteResources() {
         // Delete the stream
         AmazonKinesis kinesis = AmazonKinesisClientBuilder.standard()
             .withCredentials(credentialsProvider)
-            .withRegion("us-east-1")
+            .withRegion(region)
             .build();
 
         System.out.printf("Deleting the Amazon Kinesis stream used by the sample. Stream Name = %s.\n",
-                SAMPLE_APPLICATION_STREAM_NAME);
+                streamName);
         try {
-            kinesis.deleteStream(SAMPLE_APPLICATION_STREAM_NAME);
+            kinesis.deleteStream(streamName);
         } catch (ResourceNotFoundException ex) {
             // The stream doesn't exist.
         }
@@ -123,12 +146,12 @@ public final class AmazonKinesisApplicationSample {
         // Delete the table
         AmazonDynamoDB dynamoDB = AmazonDynamoDBClientBuilder.standard()
             .withCredentials(credentialsProvider)
-            .withRegion("us-east-1")
+            .withRegion(region)
             .build();
         System.out.printf("Deleting the Amazon DynamoDB table used by the Amazon Kinesis Client Library. Table Name = %s.\n",
-                SAMPLE_APPLICATION_NAME);
+                applicationName);
         try {
-            dynamoDB.deleteTable(SAMPLE_APPLICATION_NAME);
+            dynamoDB.deleteTable(applicationName);
         } catch (com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException ex) {
             // The table doesn't exist.
         }

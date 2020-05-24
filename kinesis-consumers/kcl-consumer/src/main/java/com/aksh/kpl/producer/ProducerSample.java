@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.aksh.kcl.consumer;
+package com.aksh.kpl.producer;
 
 /**
  * @author aksrawat
@@ -11,9 +11,9 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.aksh.kcl.consumer.ApplicationSample;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.kinesis.AmazonKinesis;
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder;
@@ -27,7 +27,7 @@ import com.amazonaws.services.kinesis.model.PutRecordResult;
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException;
 import com.amazonaws.services.kinesis.model.StreamDescription;
 
-public class AmazonKinesisRecordProducerSample {
+public class ProducerSample {
 
     /*
      * Before running the code:
@@ -70,7 +70,7 @@ public class AmazonKinesisRecordProducerSample {
     public static void main(String[] args) throws Exception {
         init();
 
-        final String myStreamName = AmazonKinesisApplicationSample.SAMPLE_APPLICATION_STREAM_NAME;
+        final String myStreamName = ApplicationSample.SAMPLE_APPLICATION_STREAM_NAME;
         final Integer myStreamSize = 1;
 
         // Describe the stream and check if it exists.
@@ -133,6 +133,7 @@ public class AmazonKinesisRecordProducerSample {
                     putRecordRequest.getPartitionKey(),
                     putRecordResult.getShardId(),
                     putRecordResult.getSequenceNumber());
+            wait(2000);
         }
     }
 
@@ -165,5 +166,14 @@ public class AmazonKinesisRecordProducerSample {
         }
 
         throw new RuntimeException(String.format("Stream %s never became active", myStreamName));
+    }
+    
+    private static void wait(int sleep) {
+    	try {
+			Thread.sleep(sleep);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 }

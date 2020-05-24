@@ -41,18 +41,16 @@ Parameters:
     Description: Alias
     Type: String
     Default: current
-  KinesisArn:
-    Description: Kinesis ARN
+  KinesisStreamName:
+    Description: Kinesis Stream Name
     Type: String
-    Default: 
+    Default: first-test
   SecurityGroupIds:
     Description: SecurityGroupIds
-    Type: CommaDelimitedList
-    Default: 
+    Type: List<AWS::EC2::SecurityGroup::Id>
   SubnetIds:
     Description: SubnetIds
-    Type: CommaDelimitedList
-    Default: 
+    Type: List<AWS::EC2::Subnet::Id>
 
 Resources:
   LambdaExecutionRole:
@@ -100,13 +98,33 @@ Resources:
             Principal:
               Service:
                 - lambda.amazonaws.com
+  KinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties: 
+     Name: !Ref 'KinesisStreamName'
+     RetentionPeriodHours: 24
+     ShardCount: 1
+     Tags: 
+       - 
+         Key: GroupId
+         Value: !Ref 'GroupId'
+       -
+         Key: ApplicationId
+         Value: !Ref 'ApplicationId'
+       -
+         Key: Environment
+         Value: !Ref 'Environment'
+       -
+         Key: AppName
+         Value: !Ref 'AppName'
+    
   LambdaFunction:
     Type: AWS::Lambda::Function
     DependsOn : LambdaExecutionRole
     Properties:
       Code:
-        S3Bucket: !Sub '${DeployBucket}'
-        S3Key: !Sub '${zipFileLocation}'
+        S3Bucket: !Ref 'DeployBucket'
+        S3Key: !Ref 'zipFileLocation'
       FunctionName: !Sub '${GroupId}-${ApplicationId}-${Environment}-${AppName}'
       MemorySize: !Ref 'MemorySize'
       Handler: !Ref 'HandlerClass'
@@ -120,6 +138,19 @@ Resources:
         Variables:
           envPrefix: !Sub '${GroupId}-${ApplicationId}-${Environment}-${AppName}'
           validate: 'Y'
+      Tags: 
+       - 
+         Key: GroupId
+         Value: !Ref 'GroupId'
+       -
+         Key: ApplicationId
+         Value: !Ref 'ApplicationId'
+       -
+         Key: Environment
+         Value: !Ref 'Environment'
+       -
+         Key: AppName
+         Value: !Ref 'AppName'
   LambdaFunctionVersion: 
     Type: AWS::Lambda::Version
     DependsOn : LambdaFunction
@@ -145,7 +176,7 @@ Resources:
     Properties: 
       BatchSize: 100
       Enabled: true
-      EventSourceArn: !Ref 'KinesisArn'
+      EventSourceArn: !GetAtt 'KinesisStream.Arn'
       FunctionName: !Sub '${GroupId}-${ApplicationId}-${Environment}-${AppName}'
       MaximumBatchingWindowInSeconds: 5
       MaximumRecordAgeInSeconds: 1800
