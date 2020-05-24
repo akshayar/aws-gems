@@ -5,9 +5,12 @@ package com.aksh.kpl.producer;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -56,6 +59,8 @@ public class MessageProducer {
 	 */
 
 	private static AmazonKinesis kinesis;
+	
+	ExecutorService executorService=Executors.newCachedThreadPool();
 
 	@PostConstruct
 	private void init() throws Exception {
@@ -65,8 +70,20 @@ public class MessageProducer {
 		initStreams();
 
 		listAllStreams();
-
-		pushMessages();
+		executorService.execute(()->{
+			try {
+				pushMessages();
+			} catch (Exception e) {
+				log.error("Error",e);
+			}	
+		});
+		
+		
+	}
+	@PreDestroy
+	void shutdown() {
+		log.info("Shutdown");
+		executorService.shutdown();
 	}
 
 	private void initCredentials() throws Exception {

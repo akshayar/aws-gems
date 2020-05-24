@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,37 +78,26 @@ public class SampleSingle {
 	
 	@Autowired
 	private CloudWatchAsyncClient cloudWatchClient;
+	
+	private Scheduler scheduler;
 
 	@PostConstruct
-	public void init() {
-		run();
-	}
-
 	private void run() {
 
 		ConfigsBuilder configsBuilder = new ConfigsBuilder(streamName, streamName, kinesisClient, dynamoClient,
 				cloudWatchClient, UUID.randomUUID().toString(), recordProcessorFactory);
 
-		Scheduler scheduler = new Scheduler(configsBuilder.checkpointConfig(), configsBuilder.coordinatorConfig(),
+		scheduler= new Scheduler(configsBuilder.checkpointConfig(), configsBuilder.coordinatorConfig(),
 				configsBuilder.leaseManagementConfig(), configsBuilder.lifecycleConfig(),
 				configsBuilder.metricsConfig(), configsBuilder.processorConfig(), configsBuilder.retrievalConfig());
 
 		Thread schedulerThread = new Thread(scheduler);
 		schedulerThread.setDaemon(true);
 		schedulerThread.start();
-
-		log.info("Press enter to shutdown");
-		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		try {
-			reader.readLine();
-		} catch (IOException ioex) {
-			log.error("Caught exception while waiting for confirm. Shutting down.", ioex);
-		}
-
-		shutDown( scheduler);
 	}
 
-	private void shutDown(Scheduler scheduler) {
+	@PreDestroy
+	public void shutDown() {
 		log.info("Cancelling producer, and shutting down executor.");
 
 		Future<Boolean> gracefulShutdownFuture = scheduler.startGracefulShutdown();

@@ -9,8 +9,12 @@ package com.aksh.kcl.consumer;
  */
 import java.net.InetAddress;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,6 +74,7 @@ public final class ApplicationBootstraper {
     @Autowired
     AmazonKinesis kinesis ;
     
+    Worker worker;
 
     // Initial position in the stream when the application starts up for the first time.
     // Position can be one of LATEST (most recent data) or TRIM_HORIZON (oldest available data)
@@ -82,13 +87,31 @@ public final class ApplicationBootstraper {
     @PostConstruct
     void init() throws Exception {
         initPositionToConsume=InitialPositionInStream.valueOf(initPosition);	
+        ExecutorService executor=Executors.newSingleThreadExecutor();
+    	executor.execute(()->{
+    		try {
+				initApplication();
+			} catch (Exception e) {
+				log.error("Error while starting",e);
+				shutdown();
+			}
+    	});
         
-        initApplication();
     }
 
+    @PreDestroy
+    void shutdown() {
+		log.info("Shutting down");
+		try {
+			worker.startGracefulShutdown().get();
+		} catch (InterruptedException | ExecutionException e) {
+			log.error("Error shutting down");
+		}
+		log.info("Graceful shutdown");
+	}
 
-    public void  initApplication() throws Exception {
 
+	public void  initApplication() throws Exception {
 
         String workerId = InetAddress.getLocalHost().getCanonicalHostName() + ":" + UUID.randomUUID();
         KinesisClientLibConfiguration kinesisClientLibConfiguration =
@@ -98,9 +121,9 @@ public final class ApplicationBootstraper {
                         workerId);
         kinesisClientLibConfiguration.withInitialPositionInStream(initPositionToConsume);
 
-        Worker worker = new Worker(recordProcessorFactory, kinesisClientLibConfiguration);
+        worker= new Worker(recordProcessorFactory, kinesisClientLibConfiguration);
 
-        log.info("Running %s to process stream %s as worker %s...\n",
+        log.info("Running {} to process stream {} as worker {}...",
                 applicationName,
                 streamName,
                 workerId);
