@@ -61,6 +61,8 @@ public class MessageProducer {
 	private static AmazonKinesis kinesis;
 	
 	ExecutorService executorService=Executors.newCachedThreadPool();
+	
+	private boolean shutdown=false;
 
 	@PostConstruct
 	private void init() throws Exception {
@@ -84,6 +86,7 @@ public class MessageProducer {
 	void shutdown() {
 		log.info("Shutdown");
 		executorService.shutdown();
+		shutdown=true;
 	}
 
 	private void initCredentials() throws Exception {
@@ -108,7 +111,7 @@ public class MessageProducer {
 		log.info("Putting records in stream : {} until this application is stopped.", streamName);
 		System.out.println("Press CTRL-C to stop.");
 		// Write records to the stream until this program is aborted.
-		while (true) {
+		while (!shutdown) {
 			long createTime = System.currentTimeMillis();
 			PutRecordRequest putRecordRequest = new PutRecordRequest();
 			putRecordRequest.setStreamName(streamName);
