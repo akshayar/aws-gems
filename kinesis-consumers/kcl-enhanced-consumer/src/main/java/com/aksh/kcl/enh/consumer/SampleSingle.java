@@ -66,6 +66,9 @@ public class SampleSingle {
 
 	@Value("${applicationName:SampleKinesisApplication}")
 	private String applicationName;
+	
+	@Value("${shutdownWaitSeconds:60}")
+	private int shutdownWaitSeconds;
 
 	@Autowired
 	private KinesisAsyncClient kinesisClient;
@@ -84,8 +87,8 @@ public class SampleSingle {
 	@PostConstruct
 	private void run() {
 
-		ConfigsBuilder configsBuilder = new ConfigsBuilder(streamName, streamName, kinesisClient, dynamoClient,
-				cloudWatchClient, UUID.randomUUID().toString(), recordProcessorFactory);
+		ConfigsBuilder configsBuilder = new ConfigsBuilder(streamName, applicationName, kinesisClient, dynamoClient,
+				cloudWatchClient, applicationName+UUID.randomUUID().toString(), recordProcessorFactory);
 
 		scheduler= new Scheduler(configsBuilder.checkpointConfig(), configsBuilder.coordinatorConfig(),
 				configsBuilder.leaseManagementConfig(), configsBuilder.lifecycleConfig(),
@@ -101,15 +104,15 @@ public class SampleSingle {
 		log.info("Cancelling producer, and shutting down executor.");
 
 		Future<Boolean> gracefulShutdownFuture = scheduler.startGracefulShutdown();
-		log.info("Waiting up to 20 seconds for shutdown to complete.");
+		log.info("Waiting up to {} seconds for shutdown to complete.",shutdownWaitSeconds);
 		try {
-			gracefulShutdownFuture.get(20, TimeUnit.SECONDS);
+			gracefulShutdownFuture.get(shutdownWaitSeconds, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
-			log.info("Interrupted while waiting for graceful shutdown. Continuing.");
+			log.error("Interrupted while waiting for graceful shutdown. Continuing.",e);
 		} catch (ExecutionException e) {
 			log.error("Exception while executing graceful shutdown.", e);
 		} catch (TimeoutException e) {
-			log.error("Timeout while waiting for shutdown. Scheduler may not have exited.");
+			log.error("Timeout while waiting for shutdown. Scheduler may not have exited.",e);
 		}
 		log.info("Completed, shutting down now.");
 	}

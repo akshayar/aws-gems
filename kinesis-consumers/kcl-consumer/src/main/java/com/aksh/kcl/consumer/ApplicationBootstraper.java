@@ -76,11 +76,6 @@ public final class ApplicationBootstraper {
     
     Worker worker;
 
-    // Initial position in the stream when the application starts up for the first time.
-    // Position can be one of LATEST (most recent data) or TRIM_HORIZON (oldest available data)
-    private static final InitialPositionInStream DEFAULT_APPLICATION_INITIAL_POSITION_IN_STREAM =
-            InitialPositionInStream.TRIM_HORIZON;
-
     @Autowired
     private ProfileCredentialsProvider credentialsProvider;
 

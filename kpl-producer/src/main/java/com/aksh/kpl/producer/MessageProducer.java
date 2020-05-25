@@ -66,6 +66,7 @@ public class MessageProducer {
 
 	@PostConstruct
 	private void init() throws Exception {
+		log.info("Stream Name:{},shard count:{}",streamName,shardCount);
 		initCredentials();
 
 		// Describe the stream and check if it exists.
