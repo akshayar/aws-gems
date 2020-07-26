@@ -13,7 +13,11 @@ public class LambdaFunctionHandler implements RequestHandler<KinesisEvent, Integ
 	Handler handler;
 	ApplicationContext applicationContext;
 	public LambdaFunctionHandler() {
-		applicationContext=new AnnotationConfigApplicationContext(BeanConfig.class);
+		this(new AnnotationConfigApplicationContext(BeanConfig.class));
+	}
+	
+	public LambdaFunctionHandler(ApplicationContext apContext) {
+		this.applicationContext=apContext;
 		handler=applicationContext.getBean(Handler.class);
 	}
 
@@ -27,4 +31,8 @@ public class LambdaFunctionHandler implements RequestHandler<KinesisEvent, Integ
 
         return event.getRecords().size();
     }
+    
+    public ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
 }

@@ -26,18 +26,12 @@ import cloud.localstack.docker.annotation.LocalstackDockerProperties;
 /**
  * A simple test harness for locally invoking your Lambda function handler.
  */
-@RunWith(LocalstackTestRunner.class)
-@LocalstackDockerProperties(services = { "dynamodb" })
-public class LambdaFunctionHandlerTest {
+public class LambdaFunctionHandlerIntegrationTest {
 	
 	public static final String TABLE_NAME="dynamo-table";
-	static ApplicationContext applicationContext;
 	@BeforeClass
 	public static void beforeClass() {
-		
 		System.setProperty("table.name", TABLE_NAME);
-		applicationContext=new AnnotationConfigApplicationContext(UTBeanConfig.class);
-		UTBeanConfig.createTable(applicationContext.getBean(AmazonDynamoDB.class), TABLE_NAME);
 	}
 
 	public KinesisEvent createInput(String payloadFile) {
@@ -59,12 +53,12 @@ public class LambdaFunctionHandlerTest {
 
 	@Test
 	public void testLambdaFunctionHandler() {
-		LambdaFunctionHandler handler = new LambdaFunctionHandler(applicationContext);
+		LambdaFunctionHandler handler = new LambdaFunctionHandler();
 		Context ctx = createContext();
 
 		Integer output = handler.handleRequest(createInput("src/test/resources/payload.json"), ctx);
 
-		CustomerDao dao=applicationContext.getBean(CustomerDao.class);
+		CustomerDao dao=handler.getApplicationContext().getBean(CustomerDao.class);
 		Customer customer=dao.get("id2", TABLE_NAME);
 		// TODO: validate output here if needed.
 		Assert.assertEquals("id2", customer.getId());

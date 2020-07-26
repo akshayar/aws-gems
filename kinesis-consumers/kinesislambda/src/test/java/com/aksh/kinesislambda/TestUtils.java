@@ -22,9 +22,11 @@ import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.util.IOUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
@@ -72,7 +74,12 @@ public class TestUtils {
             throws IOException {
 
         InputStream stream = TestUtils.class.getResourceAsStream(resource);
-        try {
+        return parse(stream,clazz);
+    }
+
+    public static <T> T parse(InputStream stream,Class<T> clazz)
+			throws IOException, JsonParseException, JsonMappingException {
+		try {
             if (clazz == S3Event.class) {
                 String json = IOUtils.toString(stream);
                 S3EventNotification event = S3EventNotification.parseJson(json);
@@ -91,7 +98,7 @@ public class TestUtils {
         } finally {
             stream.close();
         }
-    }
+	}
 
     private static class TestJacksonMapperModule extends SimpleModule {
 
