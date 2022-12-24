@@ -5,8 +5,6 @@
 //Build 
 export MAVEN_HOME=<>
 ./docker-build.sh
-mvn clean install -DskipTests
-
 ```
 ### Setup Service Account
 ```
@@ -35,6 +33,7 @@ kubectl describe serviceaccount eks-sample-account -n default
 ```
 ### Deploy
 ```
+kubectl delete -f kube-deployment.yaml
 kubectl apply -f kube-deployment.yaml
 kubectl get pods
 ```
@@ -61,8 +60,7 @@ curl -X GET  http://localhost:8080/s3/1671886792133file.txt
 
 ```
 curl http://localhost:8080
-arn:aws:sts::ACCOUNT_ID:assumed-role/eks-sample-role/aws-sdk-java-1671886731783OKSat Dec 24 13:06:58 UTC 2022[<list-of-buckets>]%                                                     
-
+{s3=[], date=Sat Dec 24 13:37:05 UTC 2022, sts=arn:aws:sts::ACCOUNT_ID:assumed-role/eks-sample-role/aws-sdk-java-1671888972435, error=}%
 curl -X PUT  http://localhost:8080/s3                      
 {"1671887224294file.txt":{"versionId":null,"expirationTime":null,"expirationTimeRuleId":null,"contentMd5":"9E9ozeU55gm2YgLSNH46TQ==",....}%                                                                                                                            
 

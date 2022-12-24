@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -41,8 +42,12 @@ public class RestControler {
 			e.printStackTrace();
 			error=e.getMessage();
 		}
-
-		return stStr+"OK"+error + new Date()+s3List;
+		Map<String,String> map=new HashMap<>();
+		map.put("sts",stStr);
+		map.put("s3",s3List);
+		map.put("error",error);
+		map.put("date",new Date()+"");
+		return map+"";
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, path = "s3")
