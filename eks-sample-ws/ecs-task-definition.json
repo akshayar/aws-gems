@@ -1,0 +1,33 @@
+{
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecs-ec2-cluster-ECSTaskExecutionRole-1A5AFCYJ6VLL3",
+  "containerDefinitions": [
+    {
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/kcl-consumer",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "portMappings": [],
+      "cpu": 0,
+      "environment": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "image": "ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/kinesis-consumers/kcl-consumer:latest",
+      "essential": true,
+      "name": "kcl-consmer"
+    }
+  ],
+  "placementConstraints": [],
+  "memory": "1024",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/kcl-consumer-ecs",
+  "family": "kcl-consumer",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "networkMode": "awsvpc",
+  "cpu": "512",
+  "volumes": []
+}

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eks-sample-ws
+  labels:
+    app: eks-sample-ws
+spec:
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  selector:
+    matchLabels:
+      app: eks-sample-ws
+  template:
+    metadata:
+      labels:
+        app: eks-sample-ws
+    spec:
+      serviceAccountName: eks-sample-account
+      containers:
+        - name: eks-sample-ws
+          image: arawa3/eks-sample-ws
+          ports:
+            - containerPort: 8080

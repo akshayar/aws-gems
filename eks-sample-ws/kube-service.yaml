@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: eks-sample-ws-ip
+spec:
+  type: ClusterIP
+  selector:
+    app: eks-sample-ws
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
